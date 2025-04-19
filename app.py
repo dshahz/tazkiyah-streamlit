@@ -11,7 +11,7 @@ st.title("🕊️ Tazkiyah – Daily Habit & Reflection Tracker")
 
 # --- Habits ---
 st.header("✅ Daily Habits")
-required_habits = ["Pray Fajr", "Read Qur'an", "No Caffeine"]
+required_habits = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Read Qur'an", "No Caffeine"]
 bonus_habits = ["Stretch", "Journal", "Lowered Gaze"]
 
 completed_required = {
