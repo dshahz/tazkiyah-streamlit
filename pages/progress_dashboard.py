@@ -14,7 +14,29 @@ if not os.path.exists(log_path):
 else:
     df = pd.read_csv(log_path)
     df["timestamp"] = pd.to_datetime(df["timestamp"])
-    df = df.sort_values(by='timestamp') # Reassign the sorted result back to df
+
+# --- Filtering by Date ---
+# Getting min and max possible dates
+min_date = df["timestamp"].min().date()
+max_date = df["timestamp"].max().date()
+
+# Start and end date inputs
+start_date = st.sidebar.date_input(label="Start Date", value=min_date, min_value=min_date, max_value=max_date)
+end_date = st.sidebar.date_input(label="End Date", value=max_date, min_value=min_date, max_value=max_date)
+if start_date > end_date:
+    st.sidebar.error("Error: Start Date cannot be after End Date")
+    st.stop()
+
+# Filtering df
+mask = (df['timestamp'].dt.date >= start_date) & (df['timestamp'].dt.date <= end_date)
+df = df[mask]
+if df.empty:
+    st.error("No log data found for the selected date range.")
+    st.stop()
+
+# Sorting df after filtering
+df = df.sort_values(by='timestamp') # Reassign the sorted result back to df
+
 
 # --- Calculate Streaks ---
 # Define the prayer columns
@@ -43,18 +65,19 @@ for i, prayer in enumerate(prayer_columns):
 
 st.markdown("---") # Add a divider before other charts
 
-# ... (Your existing charts for Alignment, Mood, Consistency) ...
-
-
 
 # --- Alignment Over Time ---
 st.subheader("🧭 Alignment Over Time")
-st.line_chart(df.set_index("timestamp")["alignment_score"])
+if 'alignment_score' in df.columns:
+    st.line_chart(df.set_index("timestamp")["alignment_score"])
+else: 
+    st.warning("Alignment score data missing for this period.")
 
 # --- Mood Frequency ---
 st.subheader("😊 Mood Trends")
-mood_counts = df["mood"].value_counts()
-st.bar_chart(mood_counts)
+if 'mood_counts' in df.columns:
+    mood_counts = df["mood"].value_counts()
+    st.bar_chart(mood_counts)
 
 # --- Required Habit Completion ---
 st.subheader("✅ Required Habit Consistency")
@@ -64,7 +87,7 @@ required = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Read Qur'an", "No Caffei
 existing_required_cols = [col for col in required if col in df.columns] 
 
 if not existing_required_cols:
-    st.info("No data found for required habits.") # Changed message slightly
+    st.info("No data found for required habits for this period.") # Changed message slightly
 else:
     # Calculate sums only for existing columns
     completed_totals = df[existing_required_cols].sum()
